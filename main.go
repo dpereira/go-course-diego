@@ -3,44 +3,44 @@ package main
 import (
     "log"
     "gopkg.in/redis.v5"
-	"encoding/json"
-	"net/http"
+    "encoding/json"
+    "net/http"
 )
 
 const queueName = "messages"
 
 type Message struct{
-	Id int
-	Message string
+    Id int
+    Message string
 }
 
 func send_raw(payload *Message, client *redis.Client) {
-	data, err := json.Marshal(payload)
+    data, err := json.Marshal(payload)
 
-	ok, err := client.LPush(queueName, data).Result()
+    ok, err := client.LPush(queueName, data).Result()
 
-	if err != nil {
-		log.Printf("Error: %#v", err)
-	} else {
-		log.Printf("OK: %#v", ok)
-	}
+    if err != nil {
+        log.Printf("Error: %#v", err)
+    } else {
+        log.Printf("OK: %#v", ok)
+    }
 }
 
 func send(id int, message string, client *redis.Client) {
-	payload := Message {
-		Id : id,
-		Message: message,
-	}
+    payload := Message {
+        Id : id,
+        Message: message,
+    }
 
     send_raw(&payload, client)
 }
 
 func receive(client *redis.Client) {
-	log.Printf("Consumer started.")
-	for {
-		data, _ := client.BRPop(0, queueName).Result()
-		log.Printf("Consumer received: %#v", data)
-	}
+    log.Printf("Consumer started.")
+    for {
+        data, _ := client.BRPop(0, queueName).Result()
+        log.Printf("Consumer received: %#v", data)
+    }
 }
 
 type MyHandler struct {}
@@ -58,9 +58,9 @@ func (h *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         Password: "", // no password set
         DB:       0,  // use default DB
     })
-	defer client.Close()
+    defer client.Close()
 
-   send_raw(payload, client)
+    send_raw(payload, client)
 }
 
 func main() {
@@ -70,9 +70,9 @@ func main() {
         DB:       0,  // use default DB
     })
 
-	go receive(client)
+    go receive(client)
 
-	send(1, "test", client)
+    send(1, "test", client)
 
     addr := "127.0.0.1:8081"
     handler := &MyHandler{}
